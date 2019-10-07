@@ -1,0 +1,11 @@
+{
+  "name": "ytdlr",
+  "version": "1.0.0",
+  "description": "Lite version of ytdl",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "bakapear",
+  "license": "MIT"
+}
