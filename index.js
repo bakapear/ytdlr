@@ -1,6 +1,8 @@
 /* global fetch, ytdlr:writable */
 (function () {
   ytdlr = async (link, next) => {
+    link = link || ''
+    if (!link && !mod) link = window.location.href
     let id = await formatId(link)
     let info = await getPlayerData(id)
     let data = await getVideoData(id, info.sts)
