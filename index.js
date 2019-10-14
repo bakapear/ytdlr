@@ -6,6 +6,8 @@ let m = {
   url: require('url')
 }
 
+let base = 'https://www.youtube.com/'
+
 function get (url, opts = {}) {
   if (!url) throw new Error('No URL specified.')
   if (opts.query) {
@@ -37,6 +39,9 @@ async function main (link, next) {
   let id = await formatId(link)
   let info = await getPlayerData(id)
   let data = await getVideoData(id, info.sts)
+  if (!data.player_response || !data.player_response.videoDetails) {
+    data = { status: 'fail', errorcode: 2, reason: 'Invalid parameters.' }
+  }
   if (data.status !== 'ok') {
     data.reason = decodeStr(data.reason)
     if (!next) throw new Error(data.reason)
@@ -49,17 +54,8 @@ async function main (link, next) {
 }
 
 async function formatId (link) {
-  try {
-    let url = 'https://www.youtube.com/oembed'
-    let { body } = await get(url, {
-      query: {
-        format: 'json',
-        url: link
-      },
-      json: true
-    })
-    return body.thumbnail_url.match(/https:\/\/i.ytimg.com\/vi\/([^/]+)/)[1]
-  } catch (e) { return link }
+  let match = link.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i)
+  return match ? match[1] : null
 }
 
 function decodeStr (str) {
@@ -109,9 +105,9 @@ async function getPlayerData (id) {
 }
 
 async function getPlayerUrl (id) {
-  let url = 'https://www.youtube.com/embed/' + id
+  let url = base + 'embed/' + id
   let { body } = await get(url, { headers: { 'accept-language': 'en_US' } })
-  return 'https://www.youtube.com/' + body.substring(body.indexOf('yts/jsbin/player'), body.indexOf('base.js') + 7)
+  return base + body.substring(body.indexOf('yts/jsbin/player'), body.indexOf('base.js') + 7)
 }
 
 function findSTS (js) {
@@ -144,7 +140,7 @@ async function getVideoData (id, sts) {
 }
 
 async function getVideoInfo (id, sts) {
-  let url = 'https://www.youtube.com/get_video_info'
+  let url = base + 'get_video_info'
   let { body } = await get(url, {
     query: {
       video_id: id,
