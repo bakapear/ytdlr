@@ -98,7 +98,9 @@
       duration: details.lengthSeconds * 1000,
       formats: data.player_response.streamingData ? data.player_response.streamingData.formats : []
     }
-    if (data.adaptive_fmts) res.formats.push(data.adaptive_fmts)
+    if (data.player_response.streamingData && data.player_response.streamingData.adaptiveFormats) {
+      res.formats.push(...data.player_response.streamingData.adaptiveFormats)
+    }
     res.formats = res.formats.map(x => {
       if (x.s) x.url += `&${x.sp}=` + fn(x.s)
 
@@ -165,6 +167,7 @@
         ps: 'default',
         gl: 'US',
         hl: 'en',
+        el: 'embedded',
         sts: sts
       }
     })
