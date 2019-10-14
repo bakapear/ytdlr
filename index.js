@@ -1,12 +1,15 @@
-module.exports = main
-
-let m = {
-  https: require('https'),
-  http: require('http'),
-  url: require('url')
+/* global fetch */
+let fruit = null
+let base = ''
+if (typeof window === 'undefined') {
+  module.exports = main
+  fruit = {
+    https: require('https'),
+    http: require('http'),
+    url: require('url')
+  }
+  base = 'https://www.youtube.com/'
 }
-
-let base = 'https://www.youtube.com/'
 
 function get (url, opts = {}) {
   if (!url) throw new Error('No URL specified.')
@@ -17,21 +20,33 @@ function get (url, opts = {}) {
     url += parts
   }
   return new Promise((resolve, reject) => {
-    let link = new m.url.URL(url)
-    let lib = link.protocol === 'https:' ? m.https : m.http
-    lib.get(link, { headers: opts.headers }, res => {
-      let data = ''
-      res.on('data', chunk => { data += chunk })
-      res.on('end', () => {
-        if (opts.json) {
-          try {
-            data = JSON.parse(data)
-          } catch (e) { reject(e) }
-        }
-        resolve({ ...res, body: data })
+    if (fruit === null) {
+      let res = fetch(url, { headers: opts.headers })
+      if (opts.json) {
+        try {
+          res = res.then(j => j.json())
+        } catch (e) { reject(e) }
+      } else {
+        res = res.then(t => t.text())
+      }
+      res.then(r => resolve({ body: r }))
+    } else {
+      let link = new fruit.url.URL(url)
+      let lib = link.protocol === 'https:' ? fruit.https : fruit.http
+      lib.get(link, { headers: opts.headers }, res => {
+        let data = ''
+        res.on('data', chunk => { data += chunk })
+        res.on('end', () => {
+          if (opts.json) {
+            try {
+              data = JSON.parse(data)
+            } catch (e) { reject(e) }
+          }
+          resolve({ ...res, body: data })
+        })
+        res.on('error', e => reject(e))
       })
-      res.on('error', e => reject(e))
-    })
+    }
   })
 }
 
@@ -55,7 +70,7 @@ async function main (link, next) {
 
 async function formatId (link) {
   let match = link.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i)
-  return match ? match[1] : null
+  return match ? match[1] : link
 }
 
 function decodeStr (str) {

@@ -2,9 +2,7 @@
 Lite version of ytdl
 > In development (sometimes does not get any format at all / randomly breaks)
 
-Only provides deciphered stream urls ready to download or play. Very lightweight and uses no external dependencies.
-
-
+Only provides deciphered stream urls ready to download or play. Very lightweight and uses no external dependencies with browser support!
 
 ```js
 let ytdlr = require("path/ytdlr")
