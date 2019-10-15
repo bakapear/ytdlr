@@ -98,19 +98,28 @@
       duration: details.lengthSeconds * 1000,
       formats: data.player_response.streamingData ? data.player_response.streamingData.formats : []
     }
-    if (data.player_response.streamingData && data.player_response.streamingData.adaptiveFormats) {
-      res.formats.push(...data.player_response.streamingData.adaptiveFormats)
-    }
     res.formats = res.formats.map(x => {
       if (x.s) x.url += `&${x.sp}=` + fn(x.s)
-
-      if (x.mimeType) x.mimeType = decodeStr(x.mimeType)
-      else if (x.type) x.type = decodeStr(x.type)
-      if (x.s) delete x.s
-      if (x.sp) delete x.sp
-      return x
+      x.mimeType = decodeStr(x.mimeType)
+      let res = {
+        itag: x.itag,
+        format: x.mimeType.split(';')[0].split('/')[1],
+        type: x.width && x.audioQuality ? 'video/audio' : x.width ? 'video' : x.audioQuality ? 'audio' : null,
+        codecs: x.mimeType.match(/codecs="(.*?)"/)[1].split(',').map(x => x.trim())
+      }
+      if (x.contentLength) res.size = x.contentLength
+      if (x.approxDurationMs) res.duration = x.approxDurationMs
+      if (res.type.indexOf('video') >= 0) {
+        if (x.qualityLabel) res.quality = x.qualityLabel
+        if (x.width && x.height) res.dimension = `${x.width}x${x.height}`
+        if (x.bitrate) res.bitrate = x.bitrate.toString()
+      }
+      if (res.type.indexOf('audio') >= 0) {
+        if (x.audioSampleRate) res.samplerate = x.audioSampleRate
+      }
+      res.url = x.url
+      return res
     })
-
     return res
   }
 
@@ -191,6 +200,9 @@
       data[key] = value
     })
     if (data && data.player_response && data.player_response.streamingData) {
+      if (data.player_response.streamingData && data.player_response.streamingData.adaptiveFormats) {
+        data.player_response.streamingData.formats.push(...data.player_response.streamingData.adaptiveFormats)
+      }
       data.player_response.streamingData.formats = data.player_response.streamingData.formats.map(x => {
         if (x.cipher) {
           let data = parseData(x.cipher)
