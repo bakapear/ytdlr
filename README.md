@@ -1,7 +1,8 @@
 # ytdlr
-Lite version of ytdl
+Kind of a lite version of [ytdl-core](https://www.npmjs.com/package/ytdl-core)
 
-Only provides deciphered stream urls ready to download or play. Very lightweight and uses no external dependencies with browser support included!
+This package provides deciphered stream urls ready to download or play from youtube videos. <br>
+Very lightweight and uses no external dependencies with browser support included!
 
 ```js
 let ytdlr = require("path/ytdlr")
