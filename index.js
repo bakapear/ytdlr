@@ -1,8 +1,21 @@
 /* global fetch, ytdlr:writable */
 (function () {
-  ytdlr = async (link, next) => {
+  ytdlr = async (link, next) => main(link, next)
+
+  let mod = null
+  let base = 'https://cors-anywhere.herokuapp.com/https://www.youtube.com/'
+  if (typeof window === 'undefined') {
+    module.exports = ytdlr
+    mod = {
+      https: require('https'),
+      http: require('http'),
+      url: require('url')
+    }
+    base = 'https://www.youtube.com/'
+  }
+
+  async function main (link, next) {
     link = link || ''
-    if (!link && !mod) link = window.location.href
     let id = await formatId(link)
     let info = await getPlayerData(id)
     let data = await getVideoData(id, info.sts)
@@ -18,17 +31,6 @@
       if (!next) return res
       else next(null, res)
     }
-  }
-  let mod = null
-  let base = ''
-  if (typeof window === 'undefined') {
-    module.exports = ytdlr
-    mod = {
-      https: require('https'),
-      http: require('http'),
-      url: require('url')
-    }
-    base = 'https://www.youtube.com/'
   }
 
   function get (url, opts = {}) {
