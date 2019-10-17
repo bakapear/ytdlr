@@ -7,5 +7,19 @@
     "start": "node index.js"
   },
   "author": "bakapear",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bakapear/ytdlr.git"
+  },
+  "keywords": [
+    "youtube",
+    "ytdl",
+    "downloader",
+    "yt"
+  ],
+  "bugs": {
+    "url": "https://github.com/bakapear/ytdlr/issues"
+  },
+  "homepage": "https://github.com/bakapear/ytdlr#readme"
 }
