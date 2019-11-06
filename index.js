@@ -1,6 +1,6 @@
 /* global fetch, ytdlr:writable */
 (function () {
-  ytdlr = async (link, next) => main(link, next)
+  ytdlr = async (link, opts, next) => main(link, opts, next)
 
   let mod = null
   let base = 'https://cors-anywhere.herokuapp.com/https://www.youtube.com/'
@@ -16,10 +16,13 @@
     base = ''
   }
 
-  async function main (link, next) {
-    link = link || ''
-    let id = await formatId(link)
-    let info = await getPlayerData(id)
+  async function main (link = '', opts = {}, next) {
+    if (opts && {}.toString.call(opts) === '[object Function]') {
+      next = opts
+      opts = {}
+    }
+    let id = formatId(link)
+    let info = opts.basic ? {} : await getPlayerData(id)
     let data = await getVideoData(id, info.sts)
     if (!data.player_response || !data.player_response.videoDetails) {
       data = { status: 'fail', errorcode: 2, reason: 'Invalid parameters.' }
@@ -111,6 +114,13 @@
         type: x.width && x.audioQuality ? 'video/audio' : x.width ? 'video' : x.audioQuality ? 'audio' : null,
         codecs: x.mimeType.match(/codecs="(.*?)"/)[1].split(',').map(x => x.trim())
       }
+      if (x.s) {
+        if (fn) res.url = `${x.url}&${x.sp}=` + fn(x.s)
+        else {
+          res.url = x.url
+          res.sig = x.s
+        }
+      } else res.url = x.url
       if (x.contentLength) res.size = x.contentLength
       if (x.approxDurationMs) res.duration = x.approxDurationMs
       if (res.type.indexOf('video') >= 0) {
@@ -181,7 +191,7 @@
         gl: 'US',
         hl: 'en',
         el: 'embedded',
-        sts: sts
+        sts: sts || 0
       }
     })
     return body
