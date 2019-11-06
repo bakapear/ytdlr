@@ -77,7 +77,7 @@
     })
   }
 
-  async function formatId (link) {
+  function formatId (link) {
     let match = link.match(/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/ ]{11})/i)
     return match ? match[1] : link
   }
@@ -106,7 +106,6 @@
       formats: data.player_response.streamingData ? data.player_response.streamingData.formats : []
     }
     res.formats = res.formats.map(x => {
-      if (x.s) x.url += `&${x.sp}=` + fn(x.s)
       x.mimeType = decodeStr(x.mimeType)
       let res = {
         itag: x.itag,
@@ -123,15 +122,15 @@
       } else res.url = x.url
       if (x.contentLength) res.size = x.contentLength
       if (x.approxDurationMs) res.duration = x.approxDurationMs
+      if (x.bitrate) res.bitrate = x.bitrate.toString()
       if (res.type.indexOf('video') >= 0) {
         if (x.qualityLabel) res.quality = x.qualityLabel
         if (x.width && x.height) res.dimension = `${x.width}x${x.height}`
-        if (x.bitrate) res.bitrate = x.bitrate.toString()
       }
       if (res.type.indexOf('audio') >= 0) {
+        if (x.audioQuality) res.quality = x.audioQuality
         if (x.audioSampleRate) res.samplerate = x.audioSampleRate
       }
-      res.url = x.url
       return res
     })
     return res
