@@ -12,6 +12,8 @@
       url: require('url')
     }
     base = 'https://www.youtube.com/'
+  } else if (window.location.href.match(/(https?:\/\/)?(www\.youtube\.com|youtu\.?be)/)) {
+    base = ''
   }
 
   async function main (link, next) {
