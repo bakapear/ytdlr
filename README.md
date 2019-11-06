@@ -5,7 +5,7 @@ This package provides deciphered stream urls ready to download or play from yout
 Very lightweight and uses no external dependencies with browser support (using cors-anywhere) included!
 
 ```js
-let ytdlr = require("path/ytdlr")
+let ytdlr = require("ytdlr")
 
 ytdlr('https://www.youtube.com/watch?v=nWhR05WLlnA').then(res => {
   /*
