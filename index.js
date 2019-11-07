@@ -113,6 +113,7 @@
         type: x.width && x.audioQuality ? 'video/audio' : x.width ? 'video' : x.audioQuality ? 'audio' : null,
         codecs: x.mimeType.match(/codecs="(.*?)"/)[1].split(',').map(x => x.trim())
       }
+      if (res.format === 'mp4' && res.type === 'audio') res.format = 'm4a'
       if (x.s) {
         if (fn) res.url = `${x.url}&${x.sp}=` + fn(x.s)
         else {
@@ -128,7 +129,7 @@
         if (x.width && x.height) res.dimension = `${x.width}x${x.height}`
       }
       if (res.type.indexOf('audio') >= 0) {
-        if (x.audioQuality) res.quality = x.audioQuality
+        if (!res.quality && x.audioQuality) res.quality = x.audioQuality
         if (x.audioSampleRate) res.samplerate = x.audioSampleRate
       }
       return res
