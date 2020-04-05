@@ -16,26 +16,12 @@
     base = ''
   }
 
-  async function main (link = '', opts = {}, next) {
-    if (opts && {}.toString.call(opts) === '[object Function]') {
-      next = opts
-      opts = {}
-    }
-    let id = formatId(link)
-    let info = opts.basic ? {} : await getPlayerData(id)
+  async function main (link) {
+    link = link || ''
+    let id = await formatId(link)
+    let info = await getPlayerData(id)
     let data = await getVideoData(id, info.sts)
-    if (!data.player_response || !data.player_response.videoDetails) {
-      data = { status: 'fail', errorcode: 2, reason: 'Invalid parameters.' }
-    }
-    if (data.status !== 'ok') {
-      data.reason = decodeStr(data.reason)
-      if (!next) throw new Error(data.reason)
-      else next(data, null)
-    } else {
-      let res = formatResponse(data, info.fn)
-      if (!next) return res
-      else next(null, res)
-    }
+    return formatResponse(data, info.fn)
   }
 
   function get (url, opts = {}) {
@@ -83,12 +69,13 @@
   }
 
   function decodeStr (str) {
-    return str.replace(/\+/g, ' ')
+    if (str) return str.replace(/\+/g, ' ')
   }
 
   function formatResponse (data, fn) {
     let details = data.player_response.videoDetails
     let res = {
+      error: decodeStr(data.player_response.playabilityStatus.reason),
       videoId: details.videoId,
       channelId: details.channelId,
       title: decodeStr(details.title),
@@ -146,10 +133,20 @@
     }
   }
 
-  async function getPlayerUrl (id) {
-    let url = base + 'embed/' + id
-    let { body } = await get(url, { headers: { 'accept-language': 'en_US' } })
-    return base + body.substring(body.indexOf('yts/jsbin/player'), body.indexOf('base.js') + 7)
+  async function getPlayerUrl (id, retries = 3) {
+    let { body } = await get(base + 'watch', {
+      query: {
+        v: id,
+        hl: 'en',
+        bpctr: Math.ceil(Date.now() / 1000)
+      }
+    })
+    let url = base + body.substring(body.indexOf('yts/jsbin/player'), body.indexOf('base.js') + 7)
+    if (url.indexOf('/yts/jsbin/player') < 0) {
+      if (retries < 0) throw new Error('Could not retrieve player url!')
+      url = await getPlayerUrl(id, --retries)
+    }
+    return url
   }
 
   function findSTS (js) {
@@ -175,23 +172,25 @@
     }
   }
 
-  async function getVideoData (id, sts) {
+  async function getVideoData (id, sts, detail) {
+    if (sts === 'f') sts = ''
     let data = await getVideoInfo(id, sts)
     data = parseData(data)
+    if (data.status !== 'ok') throw new Error(decodeStr(data.reason))
+    if (!detail && !data.player_response.streamingData) data = await getVideoData(id, sts, true)
     return data
   }
 
-  async function getVideoInfo (id, sts) {
-    let url = base + 'get_video_info'
-    let { body } = await get(url, {
+  async function getVideoInfo (id, sts, detail) {
+    let { body } = await get(base + 'get_video_info', {
       query: {
         video_id: id,
         eurl: 'https://youtube.googleapis.com/v/' + id,
         ps: 'default',
         gl: 'US',
         hl: 'en',
-        el: 'embedded',
-        sts: sts || 0
+        el: detail ? 'detailpage' : 'embedded',
+        sts: sts
       }
     })
     return body
