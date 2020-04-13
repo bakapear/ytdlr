@@ -2,9 +2,9 @@
   "name": "ytdlr",
   "version": "1.2.1",
   "description": "Lite version of ytdl",
-  "main": "index.js",
+  "main": "ytdlr.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node ytdlr.js"
   },
   "author": "bakapear",
   "license": "MIT",
