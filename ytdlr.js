@@ -132,7 +132,7 @@
   }
 
   async function getVideoData (id, sts, detail) {
-    if (sts === 'f') sts = ''
+    if (sts === 'e') sts = ''
     let data = await getVideoInfo(id, sts, detail)
     data = parseData(data)
     if (data.status !== 'ok') throw new Error(util.decodeStr(data.reason))

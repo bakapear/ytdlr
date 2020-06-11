@@ -3,13 +3,11 @@ Kind of a lite version of [ytdl-core](https://www.npmjs.com/package/ytdl-core) <
 Lightweight and uses no external dependencies.
 
 This package has been rewritten and now only works in browser. <br>
-Use [ytt.download](https://www.npmjs.com/package/ytt) for a node.
+Use [ytt.download](https://www.npmjs.com/package/ytt) for node.
 
 
 ```js
-let ytdlr = require("ytdlr")
-
-ytdlr('https://www.youtube.com/watch?v=nWhR05WLlnA').then(res => {
+await ytdlr('https://www.youtube.com/watch?v=nWhR05WLlnA')
   /*
   { videoId: 'nWhR05WLlnA',
   channelId: 'UCy4bWq_fHqTYtY0XD7NGFSg',
