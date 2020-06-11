@@ -16,7 +16,8 @@
     "youtube",
     "ytdl",
     "downloader",
-    "yt"
+    "yt",
+    "browser"
   ],
   "bugs": {
     "url": "https://github.com/bakapear/ytdlr/issues"
