@@ -1,190 +1,126 @@
 /* global fetch */
-(function () {
-  window.ytdlr = url => main(url)
+
+(() => {
+  window.ytdlr = () => ytdlr()
 
   let util = {
     base: 'https://www.youtube.com',
-    sub: (x, y, z = 0, a, b = 0) => x.substring(x.indexOf(y) + z, x.indexOf(a, x.indexOf(y) + z) + b),
-    hmsToMs: x => {
-      let r = 0
-      x = x.split(':').reverse()
-      if (x[0]) r += x[0] * 1000
-      if (x[1]) r += x[1] * 60000
-      if (x[2]) r += x[2] * 3600000
-      return r
+    between: (str, a, b, c = 0, d = 0) => {
+      let x = str.indexOf(a)
+      let y = str.indexOf(b, x)
+      if (!b) y = str.length
+      return str.substring(x + a.length + d, y + c)
     },
-    msToHms: x => {
-      let t = new Date(x).toISOString().substr(11, 8).split(':')
-      let h = Math.floor(x / 1000 / 60 / 60).toString()
-      if (h > 23) t[0] = h
-      while (t.length > 2 && t[0] === '00' && t[1].startsWith('0')) {
-        t.shift()
-      }
-      if (t.length > 2 && t[0] === '00') t.shift()
-      if (t[0].startsWith('0')) t[0] = t[0].substr(1)
-      return t.join(':')
-    },
-    formatId: x => {
-      let match = x.match(/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/ ]{11})/i)
-      return match ? match[1] : x
-    },
-    getThumb: x => x.indexOf('hqdefault') >= 0 ? `https://i3.ytimg.com/vi/${x.match(/vi\/(.*?)\//)[1]}/mqdefault.jpg` : x,
-    formatStat: (x, y) => Number(x.substr(0, x.indexOf(y)).trim().replace(/,/g, '')),
-    decodeStr: (x = '') => x.replace(/\+/g, ' ')
+    text: x => (typeof x === 'string') ? x.replace(/\+/g, ' ') : x.simpleText || x.runs.map(x => x.text).join('')
   }
 
-  function get (url, opts = {}) {
-    if (opts.query) {
-      let parts = ''
-      for (let prop in opts.query) parts += `&${prop}=${encodeURIComponent(opts.query[prop])}`
-      if (url.indexOf('?') === -1) parts = '?' + parts.substr(1)
-      url += parts
-    }
-    let out = fetch(url, { headers: opts.headers })
-    out.text = () => Promise.resolve(out).then(p => p.text())
-    return out
+  async function ytdlr () {
+    let match = window.location.href.match(/^(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?.*?(?:v|list)=(.*?)(?:&|$)|^(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?(?:(?!=).)*\/(.*)$/i)
+    if (!match || !match[1]) return
+    let id = match[1]
+
+    let player = await getPlayerData()
+    let data = await getVideoData(id, player.sts)
+    let formats = decipherFormats([
+      ...Object.values(data.streamingData.formats),
+      ...Object.values(data.streamingData.adaptiveFormats)
+    ], player.fn)
+    return formatResponse(data, formats)
   }
 
-  async function main (link = window.location.href) {
-    let id = util.formatId(link)
-    let info = await getPlayerData(id)
-    let data = await getVideoData(id, info.sts)
-    return formatResponse(data, info.fn)
-  }
-
-  function formatResponse (data, fn) {
-    let details = data.player_response.videoDetails
-    let res = {
-      error: util.decodeStr(data.player_response.playabilityStatus.reason),
-      videoId: details.videoId,
-      channelId: details.channelId,
-      title: util.decodeStr(details.title),
-      description: util.decodeStr(details.shortDescription),
-      author: util.decodeStr(details.author),
-      keywords: details.keywords ? details.keywords.map(x => util.decodeStr(x)) : [],
-      viewCount: details.viewCount,
-      isPrivate: details.isPrivate,
-      isLiveContent: details.isLiveContent,
-      allowRatings: details.allowRatings,
-      isOwnerViewing: details.isOwnerViewing,
-      averageRating: details.averageRating,
-      thumbnails: details.thumbnail.thumbnails,
-      duration: details.lengthSeconds * 1000,
-      formats: data.player_response.streamingData ? data.player_response.streamingData.formats : []
-    }
-    if (!res.error) delete res.error
-    res.formats = res.formats.map(x => {
-      if (x.s) x.url += `&${x.sp}=` + fn(x.s)
-      x.mimeType = util.decodeStr(x.mimeType)
-      let res = {
-        itag: x.itag,
-        format: x.mimeType.split(';')[0].split('/')[1],
-        type: x.width && x.audioQuality ? 'video/audio' : x.width ? 'video' : x.audioQuality ? 'audio' : null,
-        codecs: x.mimeType.match(/codecs="(.*?)"/)[1].split(',').map(x => x.trim())
-      }
-      if (x.contentLength) res.size = x.contentLength
-      if (x.approxDurationMs) res.duration = x.approxDurationMs
-      if (res.type.indexOf('video') >= 0) {
-        if (x.qualityLabel) res.quality = x.qualityLabel
-        if (x.width && x.height) res.dimension = `${x.width}x${x.height}`
-        if (x.bitrate) res.bitrate = x.bitrate.toString()
-      }
-      if (res.type.indexOf('audio') >= 0) {
-        if (x.audioSampleRate) res.samplerate = x.audioSampleRate
-      }
-      res.url = x.url
-      return res
-    })
-    return res
-  }
-
-  async function getPlayerData (id) {
-    let url = await getPlayerUrl(id)
-    let body = await get(url).text()
+  async function getPlayerData () {
+    let html = document.querySelector('head').innerHTML
+    let data = JSON.parse(util.between(html, 'window.ytplayer = {};ytcfg.set(', '})', 1))
+    let player = await fetch(data.PLAYER_JS_URL, { base: util.base }).then(t => t.text())
     return {
-      sts: util.sub(body, ',sts:', 5, ','),
-      fn: findCipherFunctions(body)
+      sts: data.STS,
+      fn: getCipherFunction(player)
     }
   }
 
-  async function getPlayerUrl (id, retries = 3) {
-    let body = await get('watch', {
-      base: util.base,
-      query: {
-        v: id,
-        hl: 'en',
-        bpctr: Math.ceil(Date.now() / 1000)
-      }
-    }).text()
-    let url = util.base + util.sub(body, '/s/player/', 0, 'base.js', 7)
-    if (url.indexOf('/s/player/') < 0) {
-      if (retries < 0) throw new Error('Could not retrieve player url!')
-      url = await getPlayerUrl(id, --retries)
-    }
-    return url
-  }
-
-  function findCipherFunctions (js) {
-    js = js.substr(js.indexOf('a=a.split("");var') + 1)
-    let top = util.sub(js, 'a=a.split("")', -15, '};', 1)
-    let side = util.sub(js, `var ${util.sub(top, 'a=a.split("")', 14, '(').split('.')[0]}`, 0, '};', 2)
+  function getCipherFunction (str) {
+    let keys = ['a=a.split("")', '};', 'var ', '(']
+    let js = util.between(str, `${keys[0]};${keys[2]}`)
+    let top = util.between(js, keys[0], keys[1], 1, -28)
+    let fn = keys[2] + util.between(top, keys[0], keys[3], 10, 1).split('.')[0]
+    let side = util.between(js, fn, keys[1], 2, -fn.length)
     return eval(side + top) // eslint-disable-line no-eval
   }
 
   async function getVideoData (id, sts, detail) {
-    if (sts === 'e') sts = ''
-    let data = await getVideoInfo(id, sts, detail)
-    data = parseData(data)
-    if (data.status !== 'ok') throw new Error(util.decodeStr(data.reason))
-    if (!detail && !data.player_response.streamingData) data = await getVideoData(id, sts, true)
-    return data
+    let url = new URL('get_video_info', util.base)
+    let params = {
+      video_id: id,
+      eurl: 'https://youtube.googleapis.com/v/' + id,
+      ps: 'default',
+      gl: 'US',
+      hl: 'en',
+      el: detail ? 'detailpage' : 'embedded',
+      sts: sts
+    }
+    Object.keys(params).forEach(key => url.searchParams.append(key, params[key]))
+    let body = await fetch(url).then(t => t.text())
+    return parseData(body).player_response
   }
 
-  async function getVideoInfo (id, sts, detail) {
-    let body = await get('get_video_info', {
-      base: util.base,
-      query: {
-        video_id: id,
-        eurl: 'https://youtube.googleapis.com/v/' + id,
-        ps: 'default',
-        gl: 'US',
-        hl: 'en',
-        el: detail ? 'detailpage' : 'embedded',
-        sts: sts
-      }
-    }).text()
-    return body
+  function parseData (data) {
+    let res = {}
+    let part = (typeof data === 'object') ? Object.entries(data) : data.split('&').map(x => x.split('='))
+    for (let i = 0; i < part.length; i++) {
+      let key = part[i][0]
+      let val = part[i][1]
+      if (key === 'player_response') val = JSON.parse(decodeURIComponent(val))
+      if (typeof val === 'object') val = parseData(val)
+      res[key] = val
+    }
+    return res
   }
 
-  function parseData (str) {
-    let data = {}
-    str.split('&').forEach(x => {
-      let key = x.substr(0, x.indexOf('='))
-      let value = x.substr(x.indexOf('=') + 1)
-      value = decodeURIComponent(value)
-      if (key === 'player_response') value = JSON.parse(value)
-      if (value.constructor === String) {
-        if (value.indexOf('&') >= 0 && key !== 'url' && key !== 'shortDescription') value = parseData(value)
-        else if (value.indexOf(',') >= 0) value = value.split(',')
-        else if (value === 'true') value = true
-        else if (value === 'false') value = false
-        else if (!isNaN(value)) value = Number(value)
+  function decipherFormats (data, fn) {
+    data = Object.values(data)
+    for (let i = 0; i < data.length; i++) {
+      let item = data[i]
+      if (item.mimeType) item.mimeType = item.mimeType.replace(/\+/g, ' ')
+      if (item.signatureCipher) {
+        let cipher = parseData(item.signatureCipher)
+        delete item.signatureCipher
+        item.url = `${decodeURIComponent(cipher.url)}&${cipher.sp}=${fn(decodeURIComponent(cipher.s))}`
       }
-      data[key] = value
-    })
-    if (data && data.player_response && data.player_response.streamingData) {
-      if (data.player_response.streamingData && data.player_response.streamingData.adaptiveFormats) {
-        data.player_response.streamingData.formats.push(...data.player_response.streamingData.adaptiveFormats)
-      }
-      data.player_response.streamingData.formats = data.player_response.streamingData.formats.map(x => {
-        if (x.cipher) {
-          let data = parseData(x.cipher)
-          delete x.cipher
-          return { ...x, ...data }
-        }
-        return x
-      })
     }
     return data
+  }
+
+  function formatResponse (data, formats) {
+    let details = data.videoDetails
+    let micro = data.microformat.playerMicroformatRenderer
+    let url = micro.ownerProfileUrl
+    let regex = /(?<=codecs=").*(?=")/
+    let video = {
+      id: details.videoId,
+      type: micro.isUnlisted ? 'unlisted' : 'public',
+      title: util.text(micro.title).replace(/\+/g, ' '),
+      description: util.text(micro.description).replace(/\+/g, ' '),
+      thumbnails: Object.values(details.thumbnail.thumbnails),
+      date: micro.publishDate,
+      duration: Number(details.lengthSeconds) * 1000,
+      views: Number(details.viewCount),
+      author: {
+        id: details.channelId,
+        vanity: url.indexOf('/user/') >= 0 ? util.between(url, '/user/') : null,
+        title: details.author
+      }
+    }
+    formats = formats.map(x => {
+      let parts = x.mimeType.split(';')
+      x.mime = parts[0]
+      x.codecs = parts[1].match(regex)[0].split(', ')
+      x.size = Number(x.contentLength)
+      x.duration = Number(x.approxDurationMs)
+      if (x.audioSampleRate) x.samplerate = Number(x.audioSampleRate)
+      x.quality = x.qualityLabel || x.audioQuality
+      x.channels = x.audioChannels
+      return x
+    })
+    return { info: video, formats: formats }
   }
 })()
