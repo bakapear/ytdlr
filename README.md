@@ -34,31 +34,23 @@ await ytdlr()
   "formats": [
     {
       "itag": 18,
-      "mimeType": "video/mp4; codecs=\"avc1.42001E, mp4a.40.2\"",
-      "bitrate": 873878,
-      "width": 640,
-      "height": 360,
-      "lastModified": "1594421510546754",
-      "contentLength": "4289735310",
-      "quality": "360p",
-      "fps": 30,
-      "qualityLabel": "360p",
-      "projectionType": "RECTANGULAR",
-      "averageBitrate": 873877,
-      "audioQuality": "AUDIO_QUALITY_LOW",
-      "approxDurationMs": "39270817",
-      "audioSampleRate": "44100",
-      "audioChannels": 2,
-      "url": "https://r3---sn-4g5ednsy.googlevideo.com/videoplayback?expire=1594688505...",
+      "url": "https://r3---sn-5hnekn7k.googlevideo.com/videoplayback?expire=1596753996&ei=7DMsX_zmMZmu7gP7oojoCg&ip=94.31.85.199&id=o-ANCw0LOum1ckxR0DBOUwPgP8hIYsf3n88xBkwsMIQeyO&itag=18&source=youtube&requiressl=yes&mh=Uz&mm=31%2C26&mn=sn-5hnekn7k%2Csn-4g5ednsy&ms=au%2Conr&mv=m&mvi=3&pl=18&gcr=de&initcwndbps=2091250&vprv=1&mime=video%2Fmp4&gir=yes&clen=4289735310&ratebypass=yes&dur=39270.817&lmt=1594421510546754&mt=1596732275&fvip=3&fexp=23883098&beids=9466588&c=WEB&txp=5431432&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cgcr%2Cvprv%2Cmime%2Cgir%2Cclen%2Cratebypass%2Cdur%2Clmt&lsparams=mh%2Cmm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AG3C_xAwRgIhANl-aKE0yHknsAuyeCqRWVCIQKxN2JQHbACvkKBxuDFRAiEAlFPVy116YkIOfFNDheIo8LKp1FAXXH0PMjfG2K817yw%3D&sig=AOq0QJ8wRgIhAKQnmKdSgjX7N9GbCUguxBW-HCj1DVmlMk4zTm7_3WCNAiEA5e_YRMJbS-ZgNLY_o0OAHlz3WmfvVbG2Q95QDlkRvp8=",
       "mime": "video/mp4",
       "codecs": [
         "avc1.42001E",
         "mp4a.40.2"
       ],
-      "size": 4289735310,
-      "duration": 39270817,
-      "samplerate": 44100,
-      "channels": 2
+      "quality": "360p",
+      "stats": {
+        "width": 640,
+        "height": 360,
+        "bitrate": 873878,
+        "samplerate": 44100,
+        "channels": 2,
+        "size": 4289735310,
+        "duration": 39270817,
+        "fps": 30
+      }
     }, 
     {...}, {...}, ...
   ]
