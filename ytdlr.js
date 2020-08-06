@@ -39,10 +39,10 @@
   }
 
   function getCipherFunction (str) {
-    let keys = ['a=a.split("")', '};', 'var ', '(']
+    let keys = ['a=a.split("")', '};', 'var ', '(', '=']
     let js = util.between(str, `${keys[0]};${keys[2]}`)
     let top = util.between(js, keys[0], keys[1], 1, -28)
-    let fn = keys[2] + util.between(top, keys[0], keys[3], 10, 1).split('.')[0]
+    let fn = keys[2] + util.between(top, keys[0], keys[3], 10, 1).split('.')[0] + keys[4]
     let side = util.between(js, fn, keys[1], 2, -fn.length)
     return eval(side + top) // eslint-disable-line no-eval
   }
@@ -112,14 +112,23 @@
     }
     formats = formats.map(x => {
       let parts = x.mimeType.split(';')
-      x.mime = parts[0]
-      x.codecs = parts[1].match(regex)[0].split(', ')
-      x.size = Number(x.contentLength)
-      x.duration = Number(x.approxDurationMs)
-      if (x.audioSampleRate) x.samplerate = Number(x.audioSampleRate)
-      x.quality = x.qualityLabel || x.audioQuality
-      x.channels = x.audioChannels
-      return x
+      return {
+        itag: x.itag,
+        url: x.url,
+        mime: parts[0],
+        codecs: parts[1].match(regex)[0].split(', '),
+        quality: x.qualityLabel || x.audioQuality || null,
+        stats: {
+          width: x.width || null,
+          height: x.height || null,
+          bitrate: x.bitrate || null,
+          samplerate: Number(x.audioSampleRate) || null,
+          channels: x.audioChannels || null,
+          size: Number(x.contentLength) || null,
+          duration: Number(x.approxDurationMs) || null,
+          fps: x.fps || null
+        }
+      }
     })
     return { info: video, formats: formats }
   }
