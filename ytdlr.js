@@ -99,7 +99,7 @@
       id: details.videoId,
       type: micro.isUnlisted ? 'unlisted' : 'public',
       title: util.text(micro.title).replace(/\+/g, ' '),
-      description: util.text(micro.description).replace(/\+/g, ' '),
+      description: micro.description ? util.text(micro.description).replace(/\+/g, ' ') : null,
       thumbnails: Object.values(details.thumbnail.thumbnails),
       date: micro.publishDate,
       duration: Number(details.lengthSeconds) * 1000,
