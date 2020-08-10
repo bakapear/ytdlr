@@ -21,10 +21,9 @@
 
     let player = await getPlayerData()
     let data = await getVideoData(id, player.sts)
-    let formats = decipherFormats([
-      ...Object.values(data.streamingData.formats),
-      ...Object.values(data.streamingData.adaptiveFormats)
-    ], player.fn)
+    let streams = Object.values(data.streamingData.adaptiveFormats)
+    if (data.streamingData.formats) streams.push(...Object.values(data.streamingData.formats))
+    let formats = decipherFormats(streams, player.fn)
     return formatResponse(data, formats)
   }
 
