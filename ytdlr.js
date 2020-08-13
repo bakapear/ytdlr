@@ -106,7 +106,7 @@
       author: {
         id: details.channelId,
         vanity: url.indexOf('/user/') >= 0 ? util.between(url, '/user/') : null,
-        title: details.author
+        title: details.author.replace(/\+/g, ' ')
       }
     }
     formats = formats.map(x => {
