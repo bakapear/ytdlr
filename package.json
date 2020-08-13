@@ -1,6 +1,6 @@
 {
   "name": "ytdlr",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Lite version of ytdl",
   "main": "ytdlr.js",
   "scripts": {
