@@ -6,6 +6,7 @@
   let util = {
     base: 'https://www.youtube.com',
     between: (str, a, b, c = 0, d = 0) => {
+      if (a instanceof RegExp) a = str.match(a)[0]
       let x = str.indexOf(a)
       let y = str.indexOf(b, x)
       if (!b) y = str.length
@@ -29,7 +30,7 @@
 
   async function getPlayerData () {
     let html = document.querySelector('head').innerHTML
-    let data = JSON.parse(util.between(html, 'window.ytplayer = {};ytcfg.set(', '})', 1))
+    let data = JSON.parse(util.between(html, /window\.ytplayer.*?=.*?{};.*?ytcfg\.set\(/s, '})', 1))
     let player = await fetch(data.PLAYER_JS_URL, { base: util.base }).then(t => t.text())
     return {
       sts: data.STS,
